@@ -21,11 +21,12 @@ def news_read(url):
     soup = BeautifulSoup(html, 'html.parser')
     #news_titles = soup.select('#wrap > div.rankingnews > div.rankingnews_box._officeResult > div > ul > li > div > a')
     news_titles = soup.select('#main_content > div > div._persist > div > div > div.cluster_body > ul > li > div.cluster_text > a')
-    for i in news_titles:
-        #print(i.text)
-        txt = txt + i.text
-        #print(i.get('href'))
-        #print()
+    print(news_titles)
+    # for i in news_titles:
+    #     #print(i.text)
+    #     txt = txt + i.text
+    #     #print(i.get('href'))
+    #     #print()
 
 def clickMe():
     url = base_url+'015'
@@ -43,6 +44,7 @@ def clickMe():
     url = base_url+'052'
     news_read(url)
 
+
 #clickMe()
 news_read(base_url)
 #print(txt)
@@ -59,7 +61,6 @@ for y,v in sorted(n_dict.items(),key = lambda x:x[1]):
 '''
 s_dict = sorted(n_dict.items(), key = lambda x:x[1])
 print(type(s_dict))
-
 for k,v in s_dict.items():
 	print(v,k)
 '''
