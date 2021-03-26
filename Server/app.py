@@ -1,50 +1,67 @@
+from flask import Flask
 import requests
+import time
+import re
 from bs4 import BeautifulSoup
 from konlpy.tag import Okt
-
-from flask import Flask
-app = Flask(__name__)
-
-base_url = 'https://news.naver.com/main/main.nhn?mode=LSD&mid=shm&sid1=101'
-
-txt = ''
 okt = Okt()
 
-def keyword_extractor(tagger, text):
-    tokens = tagger.phrases(text)
-    tokens = [ token for token in tokens if len(token) > 1 ] # 한 글자인 단어는 제외
-    count_dict = [(token, text.count(token)) for token in tokens ]
-    ranked_words = sorted(count_dict, key=lambda x:x[1], reverse=True)[:10]
-    return [ keyword for keyword, freq in ranked_words ]
+txt = ''
 
-def news_read(url):
-    global txt
+app = Flask(__name__)
+
+def getToday():
+    return time.strftime("%m%d", time.localtime(time.time()))
+
+today = getToday()
+
+base_url = "https://news.naver.com/main/list.nhn?mode=LS2D&sid2=263&sid1=101&mid=shm&date=2021"+ today
+
+def getMaxpage():
+    url = base_url + "&page=9876"
     req = requests.get(url, headers={'User-Agent':'Mozilla/5.0'})
     html = req.text
     soup = BeautifulSoup(html, 'html.parser')
-    news_titles = soup.select('#main_content > div > div._persist > div > div > div.cluster_body > ul > li > div.cluster_text > a')
-    for i in news_titles:
-        txt = txt + i.text
+    return soup.find('div', {'class': 'paging'}).find('strong').get_text()
 
-def clickMe():
-    url = base_url+'015'
-    news_read(url)
-    url = base_url+'023'
-    news_read(url)
-    url = base_url+'277'
-    news_read(url)
-    url = base_url+'020'
-    news_read(url)
-    url = base_url+'020'
-    news_read(url)
-    url = base_url+'437'
-    news_read(url)
-    url = base_url+'052'
-    news_read(url)
+maxpage = int(getMaxpage())
 
-news_read(base_url)
+titles = []
+def makeDataset():
+    latest_title = ''
+
+    for k in range(0, maxpage):
+        num = k + 1
+        url = base_url + "&page=" + str(num)
+
+        req = requests.get(url, headers={'User-Agent': 'Mozilla/5.0'})
+        html = req.text
+        soup = BeautifulSoup(html, 'html.parser')
+
+        news_sections = soup.find('div', {'class': 'list_body newsflash_body'}).find_all('ul')
+
+        for news_section in news_sections:
+            news_titles = news_section.select('dt')
+            for news_title in news_titles:
+
+                clean_title = re.sub('[-=+,.#/\?:^$@*\"※~&ㆍ!』\\‘|\(\)\[\]\<\>`\'…\"\“》\r\t\n’”˚·]', '', news_title.text)
+                if clean_title == '' or clean_title == '동영상기사' or clean_title == latest_title:
+                    continue
+
+                if "투자노트" in clean_title or "포토" in clean_title or "사진" in clean_title or "경제 브리핑" in clean_title:
+                    continue
+
+                latest_title = clean_title
+
+                global txt
+                txt = txt + clean_title
+                print(clean_title)
+
+makeDataset()
+
 n_list = okt.nouns(txt)
 n_dict = {}
+
 for t in n_list:
 	if t in n_dict:
 		n_dict[t] += 1
@@ -55,12 +72,11 @@ for y,v in sorted(n_dict.items(),key = lambda x:x[1]):
 	l_list.append(y)
 st = ""
 for i in range(-1,-11,-1):
-		#print(l_list[i])
     st = st + str(l_list[i]) + '\n'
 
 @app.route('/')
 def home():
-        return st
+    return st
 
 if __name__ == '__main__':
-        app.run(host = '172.30.1.26', debug=True)
+    app.run(host = '172.30.1.26', debug=True)
