@@ -1,0 +1,24 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+<div class="container my-3">
+    <table class="table">
+        <thead>
+        <tr class="thead-dark">
+            <th>순위</th>
+            <th>키워드</th>
+            <th>횟수</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% if rank_list %}
+        {% for rank in rank_list %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+                <a href="/{{rank.keyword}}">{{ rank.keyword }} </a>
+            </td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+</div>
