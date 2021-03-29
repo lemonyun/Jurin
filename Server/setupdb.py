@@ -10,6 +10,10 @@ from sqlalchemy.orm import sessionmaker
 
 engine = sqlalchemy.create_engine('sqlite:///D:\\Jurin\\Server\\jurinserver.db')
 Session = sessionmaker(bind=engine)
+session = Session()
+session.query(rank).delete()
+session.query(title).delete()
+session.commit()
 
 from konlpy.tag import Okt
 okt = Okt()
@@ -69,6 +73,8 @@ def makeDataset():
                 session.add(q)
                 session.commit()
 
+
+
 makeDataset()
 
 n_list = okt.nouns(txt)
@@ -81,7 +87,9 @@ for t in n_list:
 		n_dict[t] = 1
 l_list = []
 for y,v in sorted(n_dict.items(),key = lambda x:x[1]):
-	l_list.append(y)
+    l_list.append(y)
+    print(y, v)
+
 st = ""
 for i in range(-1,-11,-1):
     q = rank(keyword=l_list[i])
