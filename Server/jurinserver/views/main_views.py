@@ -10,7 +10,7 @@ def hello_pybo():
 
 @bp.route('/')
 def index():
-    rank_list = rank.query.order_by(rank.id.desc())
+    rank_list = rank.query.order_by(rank.id.asc())
     return render_template('index.html', rank_list=rank_list)
 
 
