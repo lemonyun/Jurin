@@ -1,10 +1,12 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-
-from flask import jsonify
+from collections import defaultdict
+from flask import make_response
 
 from flask_restx import Api, Resource
+
+import json
 
 migrate = Migrate()
 
@@ -12,7 +14,7 @@ app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///D:\\Jurin\\Server\\jurinserver.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
+app.config['JSON_AS_ASCII'] = False
 
 api = Api(app)
 db = SQLAlchemy(app)
@@ -30,13 +32,16 @@ class Trend(Resource):
     def get(self):
         keyword_list = rank.query.all()
 
-        jsonstr = '{"trend"['
+        jsondict = defaultdict(list)
+
         for keyword in keyword_list:
-            jsonstr += '{"name":' + '"' + keyword.keyword + '","count":' + str(keyword.id) + '},'
+            jsondict['trend'].append({'name':keyword.keyword,'count':keyword.id})
 
-        jsonstr += ']}'
+        a = dict(jsondict)
 
-        return jsonify(jsonstr)
+        bb = json.dumps(a, ensure_ascii=False, indent=4)
+        res = make_response(bb)
+        return res
 
 
 if __name__ == "__main__":
