@@ -3,16 +3,16 @@ import requests
 import time
 import re
 from bs4 import BeautifulSoup
-
-from jurinserver.models import title, rank
 import sqlalchemy
+
+from jurinserver.app import Title, Rank
 from sqlalchemy.orm import sessionmaker
 
 engine = sqlalchemy.create_engine('sqlite:///D:\\Jurin\\Server\\jurinserver.db')
 Session = sessionmaker(bind=engine)
 session = Session()
-session.query(rank).delete()
-session.query(title).delete()
+session.query(Rank).delete()
+session.query(Title).delete()
 session.commit()
 
 from konlpy.tag import Okt
@@ -68,7 +68,7 @@ def makeDataset():
                 txt = txt + clean_title
                 print(clean_title)
 
-                q = title(title=clean_title)
+                q = Title(title=clean_title)
                 session = Session()
                 session.add(q)
                 session.commit()
@@ -92,7 +92,7 @@ for y,v in sorted(n_dict.items(),key = lambda x:x[1]):
 
 st = ""
 for i in range(-1,-11,-1):
-    q = rank(keyword=l_list[i])
+    q = Rank(keyword=l_list[i])
     session = Session()
     session.add(q)
     session.commit()
