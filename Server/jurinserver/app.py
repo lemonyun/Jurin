@@ -19,18 +19,18 @@ app.config['JSON_AS_ASCII'] = False
 api = Api(app)
 db = SQLAlchemy(app)
 
-class rank(db.Model):
+class Rank(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     keyword = db.Column(db.String(200), nullable=False)
 
-class title(db.Model):
+class Title(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
 
 @api.route('/trend')
 class Trend(Resource):
     def get(self):
-        keyword_list = rank.query.all()
+        keyword_list = Rank.query.all()
 
         jsondict = defaultdict(list)
 
@@ -39,8 +39,23 @@ class Trend(Resource):
 
         a = dict(jsondict)
 
-        bb = json.dumps(a, ensure_ascii=False, indent=4)
-        res = make_response(bb)
+        b = json.dumps(a, ensure_ascii=False, indent=4)
+        res = make_response(b)
+        return res
+
+@api.route('/title/<keyword>')
+class News(Resource):
+    def get(self, keyword):
+
+        title_list = Title.query.filter(Title.title.like('%'+keyword+'%'))
+
+        jsondict = defaultdict(list)
+
+        for title in title_list:
+            jsondict['titles'].append({'title':title.title})
+        a = dict(jsondict)
+        b = json.dumps(a, ensure_ascii=False, indent=4)
+        res = make_response(b)
         return res
 
 
