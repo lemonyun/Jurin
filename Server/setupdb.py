@@ -4,16 +4,31 @@ import time
 import re
 from bs4 import BeautifulSoup
 import sqlalchemy
+from datetime import datetime, timedelta
 
-from jurinserver.app import Title, Rank
+from jurinserver.app import Title, TodayRank, WeekRank
 from sqlalchemy.orm import sessionmaker
 
 engine = sqlalchemy.create_engine('sqlite:///D:\\Jurin\\Server\\jurinserver.db')
 Session = sessionmaker(bind=engine)
+
 session = Session()
-session.query(Rank).delete()
+session.query(TodayRank).delete()
+session.query(WeekRank).delete()
+session.commit()
+
+## db 데이터 전체 초기화
+session = Session()
 session.query(Title).delete()
 session.commit()
+
+session = Session()
+## weektrend test code
+# for i in range(1, 100):
+#     q = Title(title="코로나", date=datetime.now() + timedelta(days=-2))
+#     session = Session()
+#     session.add(q)
+#     session.commit()
 
 from konlpy.tag import Okt
 okt = Okt()
@@ -21,12 +36,12 @@ okt = Okt()
 txt = ''
 
 
-def getToday():
-    return time.strftime("%m%d", time.localtime(time.time()))
+today = time.strftime("%y-%m-%d", time.localtime(time.time()))
+session = Session()
+session.query(Title).filter(Title.date.like('%'+today+'%')).delete(synchronize_session=False)  ### db에서 오늘 읽었던 타이틀만 삭제. 아래 코드에서 db에 다시 저장할 예정
+session.commit()
 
-today = getToday()
-
-base_url = "https://news.naver.com/main/list.nhn?mode=LS2D&sid2=263&sid1=101&mid=shm&date=2021"+ today
+base_url = "https://news.naver.com/main/list.nhn?mode=LS2D&sid2=263&sid1=101&mid=shm&date=2021"+ time.strftime("%m%d", time.localtime(time.time()))
 
 def getMaxpage():
     url = base_url + "&page=9876"
@@ -73,27 +88,55 @@ def makeDataset():
                 session.add(q)
                 session.commit()
 
+makeDataset() # 당일 기사 읽어오기
+
+def TitleToKeyword(text):
+    n_list = okt.nouns(text)
+    n_dict = {}
+
+    for t in n_list:
+        if t in n_dict:
+            n_dict[t] += 1
+        else:
+            n_dict[t] = 1
+    l_list = []
+    for y,v in sorted(n_dict.items(),key = lambda x:x[1]):
+        l_list.append(y)
+        print(y, v)
 
 
-makeDataset()
+    return l_list
 
-n_list = okt.nouns(txt)
-n_dict = {}
-
-for t in n_list:
-	if t in n_dict:
-		n_dict[t] += 1
-	else:
-		n_dict[t] = 1
-l_list = []
-for y,v in sorted(n_dict.items(),key = lambda x:x[1]):
-    l_list.append(y)
-    print(y, v)
+todaykeywords = TitleToKeyword(txt)
 
 st = ""
 for i in range(-1,-11,-1):
-    q = Rank(keyword=l_list[i])
+    q = TodayRank(keyword=todaykeywords[i])
     session = Session()
     session.add(q)
     session.commit()
-    st = st + str(l_list[i]) + '\n'
+    st = st + str(todaykeywords[i]) + '\n'
+
+txt = ""
+st = ""
+
+session = Session()
+week_title_list = session.query(Title).filter(Title.date.between(datetime.now() + timedelta(days=-6), datetime.now())).all()
+session.commit()
+
+
+
+for title in week_title_list:
+    txt = txt + title.title
+
+weekkeywords = TitleToKeyword(txt)
+
+for i in range(-1, -11, -1):
+    q = WeekRank(keyword=weekkeywords[i])
+    session = Session()
+    session.add(q)
+    session.commit()
+    st = st + str(weekkeywords[i]) + '\n'
+
+
+
