@@ -48,7 +48,7 @@ class WeekRank(db.Model):
 class Title(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    date = db.Column(db.DateTime, default=datetime.utcnow())
+    date = db.Column(db.DateTime, default=datetime.now())
 
 @api.route('/todaytrend')
 class Todaytrend(Resource):

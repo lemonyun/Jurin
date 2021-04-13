@@ -17,7 +17,7 @@ session.query(TodayRank).delete()
 session.query(WeekRank).delete()
 session.commit()
 
-## db 데이터 전체 초기화
+#db 데이터 전체 초기화
 session = Session()
 session.query(Title).delete()
 session.commit()
